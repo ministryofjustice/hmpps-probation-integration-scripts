@@ -15,9 +15,8 @@
 ##   aws sqs purge-queue --queue-url "${SQS_QUEUE_URL}" --region eu-west-2
 ##
 
-set -eo pipefail
 source common.sh
-requires kubectl
+requires kubectl jq
 
 if [ -z "$NAMESPACE" ] || [ -z "$SECRET_NAME" ]; then print_usage "$0"; return 0; fi
 

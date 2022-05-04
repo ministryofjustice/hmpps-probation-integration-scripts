@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -eo pipefail
 
 export PROJECT_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/projects"
 declare -a PROJECTS=(
