@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-export PROJECT_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/projects"
+declare PROJECT_HOME
+PROJECT_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/projects"
 declare -a PROJECTS=(
   'hmpps-delius-api'
   'community-api'
@@ -9,6 +10,11 @@ declare -a PROJECTS=(
   'probation-offender-events'
   'probation-offender-search'
   'probation-offender-search-indexer'
+  'hmpps-probation-integration-lambda-functions'
+  'hmpps-probation-integration-e2e-tests'
+  'hmpps-probation-integration-scripts'
+  'hmpps-pi-watch'
+  'hmpps-delius-core-terraform'
 )
 export PROJECTS
 
@@ -53,4 +59,9 @@ create_pr() {
 
 gh_login() {
   gh auth status || gh auth login --hostname github.com
+}
+
+gh_pi_prs() {
+  # shellcheck disable=SC2046
+  gh search prs --state open $(for proj in $PROJECTS; do echo --repo "ministryofjustice/$proj"; done)
 }
