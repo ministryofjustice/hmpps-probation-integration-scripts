@@ -63,5 +63,5 @@ gh_login() {
 
 gh_pi_prs() {
   # shellcheck disable=SC2046
-  gh search prs --state open $(for proj in $PROJECTS; do echo --repo "ministryofjustice/$proj"; done)
+  gh search prs --state open $(for proj in "${PROJECTS[@]}"; do echo --repo "ministryofjustice/$proj"; done)
 }
