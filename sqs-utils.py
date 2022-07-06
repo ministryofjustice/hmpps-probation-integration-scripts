@@ -25,7 +25,7 @@ def read_sqs_messages(queue_url):
         for message in response["Messages"]:
             print(json.dumps(json.loads(message["Body"])))
             sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"])
-            count = count + 1
+            count += 1
 
         response = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10)
 
@@ -63,12 +63,26 @@ def send_sqs_messages(queue_url):
     print(f"Successfully sent {success} messages. Failures={failure}")
 
 
+def get_approximate_number_of_messages(queue_url):
+    """
+    Gets the approximate number of messages in the specified SQS queue.
+
+    :param queue_url: The URL of the SQS queue.
+    :return:
+    """
+    response = sqs.get_queue_attributes(AttributeNames=["ApproximateNumberOfMessages"],
+                                        QueueUrl=queue_url)
+    print(response["Attributes"]["ApproximateNumberOfMessages"])
+
+
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("Usage: {} <read|send> <sqs_queue_url>".format(sys.argv[0]), file=sys.stderr)
+    if len(sys.argv) != 3:
+        print(f"Usage: {sys.argv[0]} <count|read|send> <sqs_queue_url>", file=sys.stderr)
         sys.exit(1)
 
-    if sys.argv[1] == "read":
+    if sys.argv[1] == "count":
+        get_approximate_number_of_messages(sys.argv[2])
+    elif sys.argv[1] == "read":
         read_sqs_messages(sys.argv[2])
     elif sys.argv[1] == "send":
         send_sqs_messages(sys.argv[2])
