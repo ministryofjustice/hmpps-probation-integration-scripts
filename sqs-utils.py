@@ -24,10 +24,12 @@ def read_sqs_messages(queue_url):
     while "Messages" in response:
         for message in response["Messages"]:
             print(json.dumps(json.loads(message["Body"])))
-            sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"])
+            sqs.delete_message(QueueUrl=queue_url,
+                               ReceiptHandle=message["ReceiptHandle"])
             count += 1
 
-        response = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10)
+        response = sqs.receive_message(
+            QueueUrl=queue_url, MaxNumberOfMessages=10)
 
     print(f"Total messages: {count}", file=sys.stderr)
 
@@ -77,7 +79,8 @@ def get_approximate_number_of_messages(queue_url):
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <count|read|send> <sqs_queue_url>", file=sys.stderr)
+        print(
+            f"Usage: {sys.argv[0]} <count|read|send> <sqs_queue_url>", file=sys.stderr)
         sys.exit(1)
 
     if sys.argv[1] == "count":
@@ -86,4 +89,3 @@ if __name__ == '__main__':
         read_sqs_messages(sys.argv[2])
     elif sys.argv[1] == "send":
         send_sqs_messages(sys.argv[2])
-
