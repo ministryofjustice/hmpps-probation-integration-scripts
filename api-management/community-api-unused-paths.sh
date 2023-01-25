@@ -1,30 +1,43 @@
 #!/usr/bin/env bash
 
-# AZURE_APP_GUID="the application GUID for Application Insights"
-COMMUNITY_API_URL='https://community-api.test.probation.service.justice.gov.uk'
+# Application Insights Credentials
+AZURE_APP_GUID=
+API_KEY=
+APPINSIGHTS_URL=https://api.applicationinsights.io/v1/apps
 
-# Requires authentication with Azure Application Insights - API key?
-# az login --use-device-code
+# HMPPS API Location
+COMMUNITY_API_URL=https://community-api.test.probation.service.justice.gov.uk
 
-# Paths used
+# Find paths used in the last $DAYS
+DAYS=30
 QUERY="requests
-         | where cloud_RoleName in ('community-api')
-         | summarize count() by name"
+        | where cloud_RoleName in ('community-api')
+        | where timestamp between(startofday(ago(${DAYS}d)) .. endofday(now()))
+        | summarize count() by name"
 
-# Run query for the the last week
-paths_called=$(az monitor app-insights query --app "${AZURE_APP_GUID}" \
-  --analytics-query "${QUERY}" \
-  --offset 7d |
-  jq -r '.tables[0].rows[][0] | sub("[^/]+"; "")' | sort | uniq)
+result=$(
+  curl -s \
+    --data-urlencode "query=${QUERY}" \
+    --get ${APPINSIGHTS_URL}/${AZURE_APP_GUID}/query \
+    --header "x-api-key: ${API_KEY}"
+)
+
+paths_called=$(jq -r '.tables[0].rows[][0] | sub("[^/]+"; "")' <<<"$result" | sort | uniq)
 
 # Find all defined Community API paths
-paths_defined_secure=$(curl -s "${COMMUNITY_API_URL}/v2/api-docs?group=Community%20API" |
-  jq -r '.paths | keys | .[]' |
-  sort | uniq)
+paths_defined_secure=$(
+  curl -s \
+    --data-urlencode "group=Community API" \
+    --get ${COMMUNITY_API_URL}/v2/api-docs |
+    jq -r '.paths | keys | .[]' | sort | uniq
+)
 
-paths_defined_api=$(curl -s "${COMMUNITY_API_URL}/v2/api-docs?group=NewTech%20Private%20APIs" |
-  jq -r '.paths | keys | .[]' |
-  sort | uniq)
+paths_defined_api=$(
+  curl -s \
+    --data-urlencode "group=NewTech Private APIs" \
+    --get ${COMMUNITY_API_URL}/v2/api-docs |
+    jq -r '.paths | keys | .[]' | sort | uniq
+)
 
 paths_defined="${paths_defined_api}${paths_defined_secure}"
 
