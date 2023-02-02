@@ -14,7 +14,7 @@ QUERY="customEvents
        | where customDimensions['additionalInformation.caseNoteType'] in ('PRISON-RELEASE','TRANSFER-FROMTOL','GEN-OSE', 'ALERT-ACTIVE', 'ALERT-INACTIVE')
        or customDimensions['additionalInformation.caseNoteType'] has 'OMIC'
        or customDimensions['additionalInformation.caseNoteType'] has 'KA'
-       | project customDimensions"
+       | project timestamp, customDimensions"
 
 result=$(
   curl -s \
