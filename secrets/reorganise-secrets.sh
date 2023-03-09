@@ -8,7 +8,7 @@ namespaces='hmpps-probation-integration-services-dev hmpps-probation-integration
 function reorganise_secret() {
   local namespace=$1
   local project=$2
-  local yml_file="$namespace/$project.yml"
+  local secret_file="$namespace/$project.json"
   local new_secret_suffix=$3
   shift 3
 
@@ -16,10 +16,11 @@ function reorganise_secret() {
   local create_secret=false
   for key in "$@"; do
     # if the value already exists in the old secret
-    if [ "$(yq '.data | has("'"$key"'")' "$yml_file")" == 'true' ]; then
+    if [ "$(jq --arg key "$key" '.data | has($key)' "$secret_file")" == 'true' ]; then
       create_secret=true
       # then create it in the new structure
-      command="$command --from-literal='$key=$(yq ".data.$key" "$yml_file" | base64 -d)'"
+      val=$(jq -r ".data.$key" "$secret_file" | base64 -d)
+      command="$command --from-literal='$key=$val'"
     fi
   done
   if [ "$create_secret" = 'true' ]; then echo "$command"; fi
@@ -28,7 +29,7 @@ function reorganise_secret() {
 for namespace in $namespaces; do
   mkdir -p "$namespace"
   for project in $projects; do
-    kubectl -n "$namespace" get secret "$project" -o yaml > "$namespace/$project.yml"
+    kubectl -n "$namespace" get secret "$project" -o json > "$namespace/$project.json"
     reorganise_secret "$namespace" "$project" 'client-credentials' 'CLIENT_ID' 'CLIENT_SECRET' 'ORDS_CLIENT_ID' 'ORDS_CLIENT_SECRET'
     reorganise_secret "$namespace" "$project" 'database' 'DB_USERNAME' 'DB_PASSWORD'
     reorganise_secret "$namespace" "$project" 'sentry' 'SENTRY_DSN'
