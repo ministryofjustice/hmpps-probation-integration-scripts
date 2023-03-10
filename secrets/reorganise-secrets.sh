@@ -3,7 +3,7 @@
 # Usage: eval "$(./reorganise-secrets.sh)"
 
 projects='approved-premises-and-delius approved-premises-and-oasys custody-key-dates-and-delius make-recall-decisions-and-delius manage-pom-cases-and-delius offender-events-and-delius person-search-index-from-delius pre-sentence-reports-to-delius prison-case-notes-to-probation prison-custody-status-to-delius refer-and-monitor-and-delius risk-assessment-scores-to-delius tier-to-delius unpaid-work-and-delius workforce-allocations-to-delius'
-namespaces='hmpps-probation-integration-services-dev hmpps-probation-integration-services-preprod hmpps-probation-integration-services-prod'
+namespaces='hmpps-probation-integration-services-prod'
 
 function reorganise_secret() {
   local namespace=$1
