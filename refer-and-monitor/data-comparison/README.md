@@ -4,40 +4,47 @@ Scripts to identify and analyse differences between Interventions referrals and 
 
 ## Prerequisites
 
-* Access to Delius DB (via AWS IAM), and R&M DB (via GitHub Team)
-* AWS CLI
-* Docker
-* Git
-* Jq
-* Kubectl
-* Python
+- Access to Delius DB (via AWS IAM), and R&M DB (via GitHub Team)
+- AWS CLI
+- Docker
+- Git
+- Jq
+- Kubectl
+- Python
 
 ## Instructions
 
 ### Setup
+
 Forward the Delius DB port to your local machine:
+
 ```shell
 ssh delius-db-1.probation.service.justice.gov.uk -L1521:localhost:1521
 ```
 
 Forward the R&M DB port to your local machine:
+
 ```shell
 git clone https://github.com/ministryofjustice/hmpps-interventions-ops
 hmpps-interventions-ops/setup_port_forward.sh hmpps-interventions-prod
 ```
 
 ### Run
+
 Use the [run.sh](./run.sh) script to export data and summarise the differences for a given date range:
+
 ```shell
 ./run.sh '2023-06-01' '2023-06-03'
 ```
 
 Run with debug logging to output the individual differences for further analysis:
+
 ```shell
 ./run.sh '2023-06-01' '2023-06-03' --log=debug
 ```
 
 Sample output:
+
 ```
 Analysing data from 2023-06-03 to 2023-06-06...
 Exporting Delius data...Done
