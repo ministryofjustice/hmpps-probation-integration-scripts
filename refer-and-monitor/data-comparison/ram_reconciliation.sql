@@ -26,7 +26,7 @@ referral_contact as (
 	select 	referral_id,
 	        'CRS Supplier Assessment' contact_type,
 			'Supplier Assessment Appointment' contact_notes,
-            ad.nps_office_code office_location,
+            coalesce(ad.nps_office_code, 'CRSEXTL') office_location,
             (appointment_time at time zone 'Europe/London')::date contact_date,
 			to_char(appointment_time at time zone 'Europe/London', 'YYYY-MM-DD HH24:MI:"00"') contact_start_time,
 			to_char((appointment_time + (duration_in_minutes::text||' minute')::INTERVAL)
@@ -74,7 +74,7 @@ referral_contact as (
 	select 	referral_id,
 	        'CRS Service Delivery' contact_type,
 			'Service Delivery Appointment' contact_notes,
-	        ad.nps_office_code office_location,
+	        coalesce(ad.nps_office_code, 'CRSEXTL') office_location,
 	        (appointment_time at time zone 'Europe/London')::date contact_date,
 			to_char(appointment_time at time zone 'Europe/London', 'YYYY-MM-DD HH24:MI:"00"') contact_start_time,
 			to_char((appointment_time + (duration_in_minutes::text||' minute')::INTERVAL)

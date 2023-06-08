@@ -13,10 +13,10 @@ RAM_FILE = "./csv/ram.csv"
 MISSING_BY_TYPE_FILE = "./csv/missing_contacts_by_type.csv"
 DIFFERENCES_BY_FIELD_FILE = "./csv/differences_by_field.csv"
 
+
 def parse_csv(file):
     """Create a dict of CSV headings to values"""
     with open(file) as csv_file:
-
         # Parse CSV file
         parsed = csv.reader(csv_file)
 
@@ -62,7 +62,7 @@ def check_missing():
 
     # Appointment contacts may be missing as future appointments
     # with no outcome are deleted when a referral is completed
-    if re.match(".*Appointment", contact_type_key):
+    if re.match(".*Appointment", contact_type_key) or contact_type_key == "End of Service":
         # Classify missing appointments
         problem_id = classify_missing_appointments(ram_row)
 
@@ -86,13 +86,7 @@ def check_missing():
 
 
 def check_differences():
-    diffs = list(
-        diff(
-            ram_row,
-            delius_row,
-            ignore=["NAME", "OUTCOME", "STATUS_AT"],
-        )
-    )
+    diffs = list(diff(ram_row, delius_row, ignore=["NAME", "OUTCOME", "STATUS_AT"]))
 
     if diffs:
         # These are different between R&M and Delius - log so we can eyeball
