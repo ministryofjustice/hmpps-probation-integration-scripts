@@ -90,7 +90,8 @@ def check_missing():
 
 
 def check_differences():
-    diffs = list(diff(ram_row, delius_row, ignore=["NAME", "OUTCOME", "STATUS_AT"]))
+    diffs = list(diff(ram_row, delius_row, ignore=[
+                 "NAME", "OUTCOME", "STATUS_AT"]))
 
     if diffs:
         # These are different between R&M and Delius - log so we can eyeball
