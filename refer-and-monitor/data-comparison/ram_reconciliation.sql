@@ -140,7 +140,7 @@ select  sr.referral_id,
 		     when concluded_at is not null and coalesce(total_attempted,0) >= lap.number_of_sessions and eosr_submitted_at is not null
 			 	then 'CRS Service Completed'
 		     else null end outcome,
-		'Y' referral_last_updated_by_ram,
+		'N' referral_manually_updated_in_delius,
 		rc.contact_notes,
 	    rc.office_location,
 		rc.contact_start_time,
@@ -148,8 +148,8 @@ select  sr.referral_id,
 		rc.appointment_id,
 	    rc.attended,
 	    rc.complied,
-		'Y' contact_created_by_ram,
-		'Y' contact_last_updated_by_ram
+		'N' created_in_delius,
+		'N' contact_manually_updated_in_delius
 from sent_referral sr
 left join referral_contact rc on rc.referral_id = sr.referral_id
 left join latest_action_plan lap on lap.referral_id = sr.referral_id
