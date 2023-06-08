@@ -58,7 +58,8 @@ def check_missing():
     stats["MISSING"] = stats.get("MISSING", 0) + 1
 
     # What kind of activity is it?
-    contact_type_key = ram_row.get("CONTACT_NOTES", "DATA_EXPORT_SYNCHRONISATION")
+    contact_type_key = ram_row.get(
+        "CONTACT_NOTES", "DATA_EXPORT_SYNCHRONISATION")
 
     # Appointment contacts may be missing as future appointments
     # with no outcome are deleted when a referral is completed
@@ -67,10 +68,12 @@ def check_missing():
         problem_id = classify_missing_appointments(ram_row)
 
         # Count missing appointment issues
-        missing_by_reason[problem_id] = missing_by_reason.get(problem_id, 0) + 1
+        missing_by_reason[problem_id] = missing_by_reason.get(
+            problem_id, 0) + 1
 
     # Count missing contacts by type
-    missing_by_type[contact_type_key] = missing_by_type.get(contact_type_key, 0) + 1
+    missing_by_type[contact_type_key] = missing_by_type.get(
+        contact_type_key, 0) + 1
 
     # Count missing contacts by date and type
     date = ram_row["CONTACT_START_TIME"][:10]
@@ -82,7 +85,8 @@ def check_missing():
         'Service Delivery Appointment': 0,
         'Supplier Assessment Appointment': 0
     })
-    missing_by_date_and_type[date][contact_type_key] = missing_by_date_and_type[date].get(contact_type_key, 0) + 1
+    missing_by_date_and_type[date][contact_type_key] = missing_by_date_and_type[date].get(
+        contact_type_key, 0) + 1
 
 
 def check_differences():
@@ -90,7 +94,8 @@ def check_differences():
 
     if diffs:
         # These are different between R&M and Delius - log so we can eyeball
-        logging.debug("%s | %s | %s", key, ram[key]["SERVICE_USERCRN"], ram[key]["NAME"])
+        logging.debug("%s | %s | %s", key,
+                      ram[key]["SERVICE_USERCRN"], ram[key]["NAME"])
         logging.debug("%s\n", diffs)
 
         # Count the differences
@@ -98,11 +103,13 @@ def check_differences():
 
         # Count the differences by field
         for item in diffs:
-            differences_by_field[item[1]] = differences_by_field.get(item[1], 0) + 1
+            differences_by_field[item[1]] = differences_by_field.get(
+                item[1], 0) + 1
 
             date = ram_row["CONTACT_START_TIME"][:10]
             differences_by_date_and_field.setdefault(date, {'Date': date})
-            differences_by_date_and_field[date][item[1]] = differences_by_date_and_field[date].get(item[1], 0) + 1
+            differences_by_date_and_field[date][item[1]] = differences_by_date_and_field[date].get(
+                item[1], 0) + 1
 
     else:
         # These are all gravy - whoo!
@@ -154,10 +161,13 @@ if __name__ == "__main__":
 
     # Print out some bits and bobs
     logging.info("\nStats:\n %s\n", pformat(stats))
-    logging.info("\nDifferences by field:\n %s\n", pformat(differences_by_field))
-    logging.debug("\nDifferences by date and field:\n %s\n", pformat(differences_by_date_and_field))
+    logging.info("\nDifferences by field:\n %s\n",
+                 pformat(differences_by_field))
+    logging.debug("\nDifferences by date and field:\n %s\n",
+                  pformat(differences_by_date_and_field))
     logging.info("\nMissing by type:\n %s\n", pformat(missing_by_type))
-    logging.debug("\nMissing by date and type:\n %s\n", pformat(missing_by_date_and_type))
+    logging.debug("\nMissing by date and type:\n %s\n",
+                  pformat(missing_by_date_and_type))
     logging.info("\nMissing by reason:\n %s\n", pformat(missing_by_reason))
 
     # Write out the reports
