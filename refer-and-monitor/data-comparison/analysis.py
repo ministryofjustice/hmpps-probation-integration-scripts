@@ -38,7 +38,8 @@ def write_csv(data, filename):
     rows = [row for row in data.values()]
     column_names = set().union(*(row.keys() for row in data.values()))
     with open(filename, "w") as file:
-        writer = csv.DictWriter(file, fieldnames=["Date"] + sorted(list(column_names - {"Date"})))
+        writer = csv.DictWriter(
+            file, fieldnames=["Date"] + sorted(list(column_names - {"Date"})))
         writer.writeheader()
         writer.writerows(rows)
 
