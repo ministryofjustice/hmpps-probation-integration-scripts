@@ -12,8 +12,8 @@ RAM_CONTACT AS (
     SELECT c.NSI_ID,
            CASE WHEN rct.CODE = 'CRSAPT' THEN 'Service Delivery Appointment'
                WHEN rct.CODE = 'CRSSAA' THEN 'Supplier Assessment Appointment'
-               ELSE REGEXP_REPLACE(TO_CHAR(dbms_lob.substr(c.NOTES,4000,1)),'^(Comment added by .+? on .+? at .+?'||chr(10)||')+(\w+ \w+ \w+).*', '\2', 1, 0, 'n') END CONTACT_NOTES,
-           REGEXP_REPLACE(dbms_lob.substr(c.NOTES,4000,1),'.+? Referral ([A-Z0-9]{8}) .*', '\1', 1, 0, 'n') REFERENCE_NUMBER,
+               ELSE REGEXP_REPLACE(TO_CHAR(dbms_lob.substr(c.NOTES,2000,1)),'^(Comment added by .+? on .+? at .+?'||chr(10)||')+(\w+ \w+ \w+).*', '\2', 1, 0, 'n') END CONTACT_NOTES,
+           REGEXP_REPLACE(dbms_lob.substr(c.NOTES,2000,1),'.+? Referral ([A-Z0-9]{8}) .*', '\1', 1, 0, 'n') REFERENCE_NUMBER,
            ol.CODE OFFICE_LOCATION,
            c.CONTACT_DATE,
            TO_CHAR(c.CONTACT_DATE,'YYYY-MM-DD ') || TO_CHAR(c.CONTACT_START_TIME,'HH24:MI:"00"') CONTACT_START_TIME,

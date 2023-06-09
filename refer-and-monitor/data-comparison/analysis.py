@@ -36,8 +36,9 @@ def parse_csv(file):
 def write_csv(data, filename):
     """Write a dict of keyed rows to a CSV file"""
     rows = [row for row in data.values()]
+    column_names = set().union(*(row.keys() for row in data.values()))
     with open(filename, "w") as file:
-        writer = csv.DictWriter(file, fieldnames=rows[0].keys())
+        writer = csv.DictWriter(file, fieldnames=["Date"] + sorted(list(column_names - {"Date"})))
         writer.writeheader()
         writer.writerows(rows)
 
