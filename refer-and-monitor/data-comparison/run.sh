@@ -34,4 +34,4 @@ sed -i '1s/.*/\U&/' csv/ram.csv
 echo Done
 
 echo
-python3 analysis.py "${@:3}"
+python3 analysis.py "${@:3}" > office-location.sql

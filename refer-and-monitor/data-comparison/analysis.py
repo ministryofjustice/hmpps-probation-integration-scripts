@@ -93,15 +93,21 @@ def check_missing():
 def check_differences():
     diffs = list(diff(ram_row, delius_row, ignore=[
                  "NAME", "OUTCOME", "STATUS_AT"]))
-    if len(diffs) == 1 and (diffs[0][1] == "CONTACT_MANUALLY_UPDATED_IN_DELIUS" or diffs[0][1] == "REFERRAL_MANUALLY_UPDATED_IN_DELIUS"):
-        # Ignore updates in Delius that don't affect fields we're interested
+    if len(diffs) == 0 or len([d for d in diffs if d[1] == "OFFICE_LOCATION" and d[2][1] == ""]) == 0:
+        # Only look at office location
         diffs = []
 
     if diffs:
         # These are different between R&M and Delius - log so we can eyeball
-        logging.debug("%s | %s | %s", key,
-                      ram[key]["SERVICE_USERCRN"], ram[key]["NAME"])
-        logging.debug("%s\n", diffs)
+        print(f"""
+update contact
+set 
+    office_location_id = (select office_location_id from office_location where code = '{ram[key]["OFFICE_LOCATION"]}'),
+    last_updated_datetime = current_date,
+    last_updated_user_id = 4
+where external_reference = 'urn:hmpps:interventions-appointment:{ram[key]["APPOINTMENT_ID"]}'
+and offender_id = (select offender_id from offender where crn = '{ram[key]["SERVICE_USERCRN"]}')
+and office_location_id is null;""")
 
         # Count the differences
         stats["DIFFERENT"] = stats.get("DIFFERENT", 0) + 1
@@ -165,15 +171,15 @@ if __name__ == "__main__":
     stats["MATCHING"] = stats.get("MATCHING", 0) - stats.get("MISSING", 0)
 
     # Print out some bits and bobs
-    logging.info("\nStats:\n %s\n", pformat(stats))
-    logging.info("\nDifferences by field:\n %s\n",
-                 pformat(differences_by_field))
-    logging.debug("\nDifferences by date and field:\n %s\n",
-                  pformat(differences_by_date_and_field))
-    logging.info("\nMissing by type:\n %s\n", pformat(missing_by_type))
-    logging.debug("\nMissing by date and type:\n %s\n",
-                  pformat(missing_by_date_and_type))
-    logging.info("\nMissing by reason:\n %s\n", pformat(missing_by_reason))
+    # logging.info("\nStats:\n %s\n", pformat(stats))
+    # logging.info("\nDifferences by field:\n %s\n",
+    #              pformat(differences_by_field))
+    # logging.debug("\nDifferences by date and field:\n %s\n",
+    #               pformat(differences_by_date_and_field))
+    # logging.info("\nMissing by type:\n %s\n", pformat(missing_by_type))
+    # logging.debug("\nMissing by date and type:\n %s\n",
+    #               pformat(missing_by_date_and_type))
+    # logging.info("\nMissing by reason:\n %s\n", pformat(missing_by_reason))
 
     # Write out the reports
     write_csv(missing_by_date_and_type, MISSING_BY_TYPE_FILE)
