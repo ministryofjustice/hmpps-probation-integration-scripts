@@ -39,4 +39,4 @@ kubectl run \
 --image=ghcr.io/ministryofjustice/hmpps-devops-tools:latest \
 --restart=Never --stdin=true --tty=true --rm \
 --overrides='{"spec":{"serviceAccount":"hmpps-probation-integration-services"}}' \
-"${USER}-debug" -- "$@"
+"${USER}-debug" -- aws "$@"
