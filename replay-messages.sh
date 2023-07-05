@@ -27,11 +27,14 @@ if [ -z "$START_TIME" ] \
 || [ -z "$END_TIME" ] \
 || [ -z "$QUEUE_NAME" ] \
 || [ -z "$APP_INSIGHTS_APPLICATION_GUID" ] \
-|| [ -z "$APP_INSIGHTS_API_KEY" ]; then print_usage "$0"; return 0; fi
+|| [ -z "$APP_INSIGHTS_API_KEY" ]; then print_usage "$0"; exit 0; fi
+
+namespace=hmpps-probation-integration-services-preprod
+pod_name="${USER}-replay"
 
 # Get event types for the target queue
 echo "Getting event types for $QUEUE_NAME"
-terraform_url="https://raw.githubusercontent.com/ministryofjustice/cloud-platform-environments/main/namespaces/live.cloud-platform.service.justice.gov.uk/hmpps-probation-integration-services-preprod/resources/$QUEUE_NAME.tf"
+terraform_url="https://raw.githubusercontent.com/ministryofjustice/cloud-platform-environments/main/namespaces/live.cloud-platform.service.justice.gov.uk/$namespace/resources/$QUEUE_NAME.tf"
 event_types_json=$(curl -sf "$terraform_url" | tr '\n' ' ' | grep -oP 'filter_policy = \Kjsonencode\(.+?\)' | head -n1 | terraform console | jq -c 'fromjson | .eventType | tojson')
 
 # Get messages logged by hmpps-domain-event-logger
@@ -48,21 +51,34 @@ customEvents
   | project customDimensions.rawMessage
 "
 curl -sf --show-error -H "x-api-key: $APP_INSIGHTS_API_KEY" --data-urlencode "query=$query" --get "https://api.applicationinsights.io/v1/apps/${APP_INSIGHTS_APPLICATION_GUID}/query" \
-| jq -c '.tables[0].rows | flatten | .[] | fromjson' > messages.jsonl
+  | jq -c '.tables[0].rows | flatten | .[] | fromjson' \
+  > messages.jsonl
 echo "Found $(wc -l < messages.jsonl) messages to replay"
 
-# Send messages using a service pod
-echo "Sending messages..."
-kubectl run \
---namespace=hmpps-probation-integration-services-preprod \
---image=ghcr.io/ministryofjustice/hmpps-devops-tools:latest \
---restart=Never --stdin=true --tty=true --rm \
---env "SCRIPT=$(cat sqs-utils.py)" \
---env "MESSAGES=$(cat messages.jsonl)" \
---env "QUEUE_NAME=$QUEUE_NAME" \
---overrides='{"spec":{"serviceAccount":"hmpps-probation-integration-services"}}' \
-"${USER}-replay" -- sh -c '
-  queue_url=$(aws sqs get-queue-url --queue-name "probation-integration-preprod-$QUEUE_NAME" --query QueueUrl --output text);
-  echo "Queue URL: $queue_url"
-  echo "$MESSAGES" | python -c "$SCRIPT" send "$queue_url"
-'
+# Start service pod in background
+echo "Starting service pod '$pod_name'"
+function delete_pod() { kubectl --namespace="$namespace" delete pod "$pod_name"; }
+trap delete_pod SIGTERM SIGINT
+kubectl run "$pod_name" \
+  --namespace="$namespace" \
+  --image=ghcr.io/ministryofjustice/hmpps-devops-tools:latest \
+  --restart=Never --stdin=true --tty=true --rm \
+  --overrides='{"spec":{"serviceAccount":"hmpps-probation-integration-services"}}' \
+  -- sh & sleep 5
+kubectl wait \
+  --namespace="$namespace" \
+  --for=condition=ready pod "$pod_name"
+
+# Copy files to service pod
+kubectl cp --namespace="$namespace" ./sqs-utils.py "$pod_name:/tmp/sqs-utils.py"
+kubectl cp --namespace="$namespace" ./messages.jsonl "$pod_name:/tmp/messages.jsonl"
+
+# Get queue url
+queue_url=$(kubectl exec "$pod_name" --namespace="$namespace" -- aws sqs get-queue-url --queue-name "probation-integration-preprod-$QUEUE_NAME" --query QueueUrl --output text)
+echo "Got queue URL: $queue_url"
+
+# Run script to replay messages
+kubectl exec "$pod_name" --namespace="$namespace" -- sh -c "python /tmp/sqs-utils.py send '$queue_url' < /tmp/messages.jsonl"
+
+# Clean up
+kubectl --namespace="$namespace" delete pod "$pod_name"
