@@ -21,6 +21,7 @@ requires kubectl jq
 if [ -z "$NAMESPACE" ] || [ -z "$SECRET_NAME" ]; then print_usage "$0"; return 0; fi
 
 secret=$(kubectl -n "$NAMESPACE" get secret "$SECRET_NAME" -o json)
-export SQS_QUEUE_URL=$(echo $secret | jq -r '.data.sqs_queue_url | @base64d')
-export AWS_ACCESS_KEY_ID=$(echo $secret | jq -r '.data.access_key_id | @base64d')
-export AWS_SECRET_ACCESS_KEY=$(echo $secret | jq -r '.data.secret_access_key | @base64d')
+export QUEUE_NAME=$(echo $secret | jq -r '.data.QUEUE_NAME | @base64d')
+export AWS_ACCESS_KEY_ID=$(echo $secret | jq -r '.data.AWS_ACCESS_KEY_ID | @base64d')
+export AWS_SECRET_ACCESS_KEY=$(echo $secret | jq -r '.data.AWS_SECRET_ACCESS_KEY | @base64d')
+export SQS_QUEUE_URL=$(aws sqs get-queue-url --queue-name "$QUEUE_NAME" --region eu-west-2 | jq -r '.QueueUrl')
