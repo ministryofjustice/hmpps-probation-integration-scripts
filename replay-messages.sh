@@ -35,23 +35,25 @@ pod_name="${USER}-replay"
 # Get event types for the target queue
 echo "Getting event types for $QUEUE_NAME"
 terraform_url="https://raw.githubusercontent.com/ministryofjustice/cloud-platform-environments/main/namespaces/live.cloud-platform.service.justice.gov.uk/$namespace/resources/$QUEUE_NAME.tf"
-event_types_json=$(curl -sf "$terraform_url" | tr '\n' ' ' | grep -oP 'filter_policy = \Kjsonencode\(.+?\)' | head -n1 | terraform console | jq -c 'fromjson | .eventType | tojson')
+event_types_json=$(curl --fail "$terraform_url" | tr '\n' ' ' | grep -oP 'filter_policy = \Kjsonencode\(.+?\)' | head -n1 | terraform console | jq -c 'fromjson | .eventType | tojson')
+echo "Got event types: $event_types_json"
 
 # Get messages logged by hmpps-domain-event-logger
-echo "Fetching events matching $event_types_json"
 query="
-let startTime=$START_TIME;
-let endTime=$END_TIME;
-let eventTypes=parse_json($event_types_json);
-customEvents
-  | where timestamp between(startTime .. endTime)
-  | where cloud_RoleName in ('hmpps-domain-event-logger')
-  | where set_has_element(eventTypes, tostring(customDimensions.eventType))
-  | order by timestamp desc
-  | project customDimensions.rawMessage
+  let startTime=$START_TIME;
+  let endTime=$END_TIME;
+  let eventTypes=parse_json($event_types_json);
+  customEvents
+    | where timestamp between(startTime .. endTime)
+    | where cloud_RoleName in ('hmpps-domain-event-logger')
+    | where set_has_element(eventTypes, tostring(customDimensions.eventType))
+    | order by timestamp desc
+    | project customDimensions.rawMessage
 "
-curl -sf --show-error -H "x-api-key: $APP_INSIGHTS_API_KEY" --data-urlencode "query=$query" --get "https://api.applicationinsights.io/v1/apps/${APP_INSIGHTS_APPLICATION_GUID}/query" \
+echo "Running app insights query: $query"
+curl --fail -H "x-api-key: $APP_INSIGHTS_API_KEY" --data-urlencode "query=$query" --get "https://api.applicationinsights.io/v1/apps/$APP_INSIGHTS_APPLICATION_GUID/query" \
   | jq -c '.tables[0].rows | flatten | .[] | fromjson' \
+  | jq -c '.Message = (.Message | fromjson | if .detailUrl? then .detailUrl |= sub("(?<prefix>https://.+?)\\."; "\(.prefix)-preprod.") else . end | tojson)' \
   > messages.jsonl
 echo "Found $(wc -l < messages.jsonl) messages to replay"
 
