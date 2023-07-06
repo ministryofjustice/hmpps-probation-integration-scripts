@@ -53,7 +53,12 @@ query="
 echo "Running app insights query: $query"
 curl --fail -H "x-api-key: $APP_INSIGHTS_API_KEY" --data-urlencode "query=$query" --get "https://api.applicationinsights.io/v1/apps/$APP_INSIGHTS_APPLICATION_GUID/query" \
   | jq -c '.tables[0].rows | flatten | .[] | fromjson' \
-  | jq -c '.Message = (.Message | fromjson | if .detailUrl? then .detailUrl |= sub("(?<prefix>https://.+?)\\."; "\(.prefix)-preprod.") else . end | tojson)' \
+  | jq -c '.Message = (.Message | fromjson |
+    if .detailUrl? then
+      .detailUrl |= if contains("https://offender-case-notes") then sub("https://offender-case-notes"; "https://preprod.offender-case-notes")
+                    elif contains("https://moic") then sub("https://moic"; "https://preprod.moic")
+                    else sub("(?<prefix>https://.+?)\\."; "\(.prefix)-preprod.") end
+    else . end | tojson)' \
   > messages.jsonl
 echo "Found $(wc -l < messages.jsonl) messages to replay"
 
