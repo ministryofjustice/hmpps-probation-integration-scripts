@@ -94,7 +94,8 @@ def check_missing():
 def check_differences():
     diffs = list(diff(ram_row, delius_row, ignore=[
         "NAME", "OUTCOME", "STATUS_AT",
-        "ATTENDED", "COMPLIED" # These can legitimately be updated in Delius following practitioner review
+        # These can legitimately be updated in Delius following practitioner review
+        "ATTENDED", "COMPLIED"
     ]))
     if len(diffs) == 1 and (diffs[0][1] == "CONTACT_MANUALLY_UPDATED_IN_DELIUS" or diffs[0][1] == "REFERRAL_MANUALLY_UPDATED_IN_DELIUS"):
         # Ignore updates in Delius that don't affect fields we're interested
