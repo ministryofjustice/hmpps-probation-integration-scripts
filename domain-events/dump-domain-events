@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+APP_INSIGHTS_APPLICATION_GUID=
+APP_INSIGHTS_API_KEY=
+APP_INSIGHTS_URL=https://api.applicationinsights.io/v1/apps
+
+QUERY="customEvents
+         | where cloud_RoleName in ('hmpps-domain-event-logger')
+         | where timestamp between((ago(30m)) .. now())"
+
+res=$(xh -f get "$APP_INSIGHTS_URL/$APP_INSIGHTS_APPLICATION_GUID/query" \
+	"query==$QUERY" \
+	x-api-key:"$APP_INSIGHTS_API_KEY")
+
+messages=$(echo "$res" | jq -r '.tables[0].rows[][3] | fromjson | .rawMessage | fromjson | .Message' | jq -s)
+
+echo "$messages"
