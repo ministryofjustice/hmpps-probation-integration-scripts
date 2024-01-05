@@ -69,7 +69,7 @@ trap delete_pod SIGTERM SIGINT
 kubectl run "$pod_name" \
   --namespace="$namespace" \
   --image=ghcr.io/ministryofjustice/hmpps-devops-tools:latest \
-  --restart=Never --stdin=true --tty=true --rm \
+  --restart=Never \
   --overrides='{
     "spec": {
       "serviceAccount":"hmpps-probation-integration-services",
@@ -77,13 +77,11 @@ kubectl run "$pod_name" \
         {
           "name": "replay",
           "image": "ghcr.io/ministryofjustice/hmpps-devops-tools:latest",
-          "command": ["sh"],
-          "stdin": true,
-          "tty": true,
+          "command": ["sh", "-c", "sleep 600"],
           "resources": {
             "limits": {
               "cpu": "1000m",
-              "memory": "2Gi"
+              "memory": "1Gi"
             }
           }
         }
