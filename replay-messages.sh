@@ -71,6 +71,8 @@ kubectl run "$pod_name" \
   --image=ghcr.io/ministryofjustice/hmpps-devops-tools:latest \
   --restart=Never --stdin=true --tty=true --rm \
   --overrides='{"spec":{"serviceAccount":"hmpps-probation-integration-services"}}' \
+  --requests='cpu=100m,memory=256Mi'
+  --limits='cpu=1000m,memory=2Gi'
   -- sh & sleep 5
 kubectl wait \
   --namespace="$namespace" \
