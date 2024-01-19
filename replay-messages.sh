@@ -35,18 +35,33 @@ pod_name="${USER}-replay"
 # Get event types for the target queue
 echo "Getting event types for $QUEUE_NAME"
 terraform_url="https://raw.githubusercontent.com/ministryofjustice/cloud-platform-environments/main/namespaces/live.cloud-platform.service.justice.gov.uk/$namespace/resources/$QUEUE_NAME.tf"
-event_types_json=$(curl --fail "$terraform_url" | tr '\n' ' ' | grep -oP 'filter_policy = \Kjsonencode\(.+?\)' | head -n1 | terraform console | jq -c 'fromjson | .eventType | tojson')
-echo "Got event types: $event_types_json"
+filters_json=$(curl --fail "$terraform_url" | tr '\n' ' ' | grep -oP 'filter_policy = \Kjsonencode\(.+?\)' | head -n1 | terraform console | jq -c 'fromjson | tojson')
+echo "Got filters: $filters_json"
+
+# Convert JSON to an app insights query. Currently only supports exact string match or prefix match.
+app_insights_filter=$(echo "$filters_json" | jq -r '"(" + (
+. | to_entries
+  | map(. as $entry
+    | (.value
+      | map(if type == "string" then ($entry.key + " == \"" + .+ "\"")
+          elif type == "object" and (. | has("prefix")) then ($entry.key + " startswith \"" + .prefix + "\"")
+          else null
+        end)
+      | del(..|nulls)
+      | join(" or ")))
+    | join(") and ("))
++ ")"')
+echo "Converted filters to app insights query: $app_insights_filter"
 
 # Get messages logged by hmpps-domain-event-logger
 query="
   let startTime=$START_TIME;
   let endTime=$END_TIME;
-  let eventTypes=parse_json($event_types_json);
   customEvents
     | where timestamp between(startTime .. endTime)
     | where cloud_RoleName in ('hmpps-domain-event-logger')
-    | where set_has_element(eventTypes, tostring(customDimensions.eventType))
+    | extend attrs=parse_json(tostring(customDimensions.rawMessage)).MessageAttributes
+    | where $app_insights_filter
     | order by timestamp desc
     | project customDimensions.rawMessage
 "
