@@ -32,10 +32,10 @@ if [ -z "$START_TIME" ] \
 namespace=hmpps-probation-integration-services-preprod
 pod_name="${USER}-replay"
 
-# Get event types for the target queue
-echo "Getting event types for $QUEUE_NAME"
+# Get subscription filters for the target queue
+echo "Getting filters for $QUEUE_NAME"
 terraform_url="https://raw.githubusercontent.com/ministryofjustice/cloud-platform-environments/main/namespaces/live.cloud-platform.service.justice.gov.uk/$namespace/resources/$QUEUE_NAME.tf"
-filters_json=$(curl --fail "$terraform_url" | tr '\n' ' ' | grep -oP 'filter_policy = \Kjsonencode\(.+?\)' | head -n1 | terraform console | jq -c 'fromjson | tojson')
+filters_json=$(curl --fail "$terraform_url" | tr '\n' ' ' | grep -oP 'filter_policy = \Kjsonencode\(.+?\)' | head -n1 | terraform console | jq -c 'fromjson')
 echo "Got filters: $filters_json"
 
 # Convert JSON to an app insights query. Currently only supports exact string match or prefix match.
