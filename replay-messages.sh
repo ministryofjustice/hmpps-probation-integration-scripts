@@ -43,8 +43,8 @@ app_insights_filter=$(echo "$filters_json" | jq -r '"(" + (
 . | to_entries
   | map(. as $entry
     | (.value
-      | map(if type == "string" then ($entry.key + " == \"" + .+ "\"")
-          elif type == "object" and (. | has("prefix")) then ($entry.key + " startswith \"" + .prefix + "\"")
+      | map(if type == "string" then ("attrs." + $entry.key + ".Value == \"" + . + "\"")
+          elif type == "object" and (. | has("prefix")) then ("attrs." + $entry.key + ".Value startswith \"" + .prefix + "\"")
           else null
         end)
       | del(..|nulls)
