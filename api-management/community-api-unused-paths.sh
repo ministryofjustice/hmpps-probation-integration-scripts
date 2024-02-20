@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
-# Application Insights Credentials
-# APP_INSIGHTS_APPLICATION_GUID=
-# APP_INSIGHTS_API_KEY=
+# Read credentials from 1Password
+IFS=', ' read -r -a app_insights_credentials <<<"$(
+  op item get --vault 'HMPPS-Development-Team' 'Application Insights API - T3' --fields username,credential
+)"
+
+# Application Insights access
+APP_INSIGHTS_APPLICATION_GUID=${app_insights_credentials[0]}
+APP_INSIGHTS_API_KEY=${app_insights_credentials[1]}
 APP_INSIGHTS_URL=https://api.applicationinsights.io/v1/apps
 
 # HMPPS API Location
@@ -28,14 +33,14 @@ paths_called=$(jq -r '.tables[0].rows[][0] | sub("[^/]+"; "")' <<<"$result" | so
 paths_defined_secure=$(
   curl -s \
     --data-urlencode "group=Community API" \
-    --get "${COMMUNITY_API_URL}"/v2/api-docs |
+    --get "${COMMUNITY_API_URL}"/v3/api-docs/Community%20API |
     jq -r '.paths | keys | .[]' | sort | uniq
 )
 
 paths_defined_api=$(
   curl -s \
     --data-urlencode "group=NewTech Private APIs" \
-    --get "${COMMUNITY_API_URL}"/v2/api-docs |
+    --get "${COMMUNITY_API_URL}"/v3/api-docs/Community%20API |
     jq -r '.paths | keys | .[]' | sort | uniq
 )
 
