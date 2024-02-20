@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-# APP_INSIGHTS_APPLICATION_GUID=
-# APP_INSIGHTS_API_KEY=
-APP_INSIGHTS_URL=https://api.applicationinsights.io/v1/apps
+# Read credentials from 1Password
+IFS=', ' read -r -a app_insights_credentials <<<"$(
+  op item get --vault 'HMPPS-Development-Team' 'Application Insights API - T3' --fields username,credential
+)"
 
-# Requires authentication with Azure Application Insights - API key?
-# az login --use-device-code
+# Application Insights access
+APP_INSIGHTS_APPLICATION_GUID=${app_insights_credentials[0]}
+APP_INSIGHTS_API_KEY=${app_insights_credentials[1]}
+APP_INSIGHTS_URL=https://api.applicationinsights.io/v1/apps
 
 # Paths used
 QUERY="requests
@@ -16,7 +19,7 @@ QUERY="requests
 result=$(
   curl -s \
     --data-urlencode "query=${QUERY}" \
-    --get ${APP_INSIGHTS_URL}/${APP_INSIGHTS_APPLICATION_GUID}/query \
+    --get "${APP_INSIGHTS_URL}/${APP_INSIGHTS_APPLICATION_GUID}/query" \
     --header "x-api-key: ${APP_INSIGHTS_API_KEY}"
 )
 
