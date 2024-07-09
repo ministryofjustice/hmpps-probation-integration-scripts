@@ -31,7 +31,6 @@ function updateProduct(
   parent = null;
   team = null;
   productSet = null;
-  serviceArea = null;
 
   // check for line breaks where data has more than one line.
   confluenceLink = confluenceLink.split("\n").join(", ");
@@ -47,7 +46,7 @@ function updateProduct(
       team: team,
       phase: phase,
       product_set: productSet,
-      service_area: serviceArea,
+      service_area: fetchServiceArea(serviceArea),
       delivery_manager: deliveryManager,
       product_manager: productManager,
       confluence_link: confluenceLink,
@@ -94,4 +93,20 @@ function updateProduct(
   }
 
   return response.getResponseCode();
+}
+
+function fetchServiceArea(serviceArea) {
+  var options = {
+    method: "get",
+    headers: headers,
+  };
+  response = UrlFetchApp.fetch(
+    `${apiEndpoint}/service-areas?filters[name]=${encodeURIComponent(serviceArea)}`,
+    options,
+  );
+  json = JSON.parse(response);
+  if (json.data.length === 0) {
+    return null;
+  }
+  return json.data[0].id;
 }
