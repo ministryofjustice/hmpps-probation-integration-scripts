@@ -72,6 +72,7 @@ curl --fail -H "x-api-key: $APP_INSIGHTS_API_KEY" --data-urlencode "query=$query
     if .detailUrl? then
       .detailUrl |= if contains("https://offender-case-notes") then sub("https://offender-case-notes"; "https://preprod.offender-case-notes")
                     elif contains("https://moic") then sub("https://moic"; "https://preprod.moic")
+                    elif contains("https://oasys") then sub("https://oasys"; "https://pp.oasys")
                     else sub("(?<prefix>https://.+?)\\."; "\(.prefix)-preprod.") end
     else . end | tojson)' \
   > messages.jsonl
