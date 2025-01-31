@@ -1,9 +1,9 @@
+import boto3
 import json
 import sys
 
-import boto3
-
 sqs = boto3.client("sqs", region_name="eu-west-2")
+sns = boto3.client("sns", region_name="eu-west-2")
 
 
 def read_sqs_messages(queue_url):
@@ -65,6 +65,32 @@ def send_sqs_messages(queue_url):
     print(f"Successfully sent {success} messages. Failures={failure}")
 
 
+def publish_sns_notifications(topic_arn):
+    """
+    Publishes notifications to the specified SNS topic. Reads each line from stdin,
+    parses it as a single JSON message, and sends it to the topic.
+
+    Example usage for sending messages from a file:
+
+     cat notifications.jsonl | python3 sqs-utils.py publish "$SNS_TOPIC_ARN" | tee send-output.log
+
+    :param topic_arn: The ARN of the SNS topic.
+    :return:
+    """
+    success = 0
+    for line in sys.stdin:
+        message = json.loads(line)
+        message_attributes = dict((k, {"StringValue": v["Value"], "DataType": "String"})
+                                  for k, v in message["MessageAttributes"].items())
+        response = sns.publish(Message=json.dumps(message),
+                               MessageAttributes=message_attributes,
+                               TopicArn=topic_arn)
+        print(response)
+        success += 1
+
+    print(f"Successfully published {success} notifications.")
+
+
 def get_approximate_number_of_messages(queue_url):
     """
     Gets the approximate number of messages in the specified SQS queue.
@@ -89,3 +115,5 @@ if __name__ == '__main__':
         read_sqs_messages(sys.argv[2])
     elif sys.argv[1] == "send":
         send_sqs_messages(sys.argv[2])
+    elif sys.argv[1] == "publish":
+        publish_sns_notifications(sys.argv[2])
