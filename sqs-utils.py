@@ -79,10 +79,11 @@ def publish_sns_notifications(topic_arn):
     """
     success = 0
     for line in sys.stdin:
-        message = json.loads(line)
+        notification = json.loads(line)
+        message = notification['Message']
         message_attributes = dict((k, {"StringValue": v["Value"], "DataType": "String"})
-                                  for k, v in message["MessageAttributes"].items())
-        response = sns.publish(Message=json.dumps(message),
+                                  for k, v in notification["MessageAttributes"].items())
+        response = sns.publish(Message=message,
                                MessageAttributes=message_attributes,
                                TopicArn=topic_arn)
         print(response)
